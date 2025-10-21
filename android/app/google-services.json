@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "768886278523",
+    "project_id": "reviseright-d7979",
+    "storage_bucket": "reviseright-d7979.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:768886278523:android:b8e12bdf6b2bbc1fc015de",
+        "android_client_info": {
+          "package_name": "com.example.revise_right"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBi_X34derBwzfjqh0LX51GNaF_xL8N82I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
