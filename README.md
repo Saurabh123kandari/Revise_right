@@ -1,16 +1,40 @@
 # revise_right
 
-A new Flutter project.
+ReviseRight is a personalized e-learning and productivity platform that empowers learners to organize their study life efficiently.
+With a clean UI and robust backend integration, users can set goals, track subjects and topics, and manage their daily progress seamlessly.
 
-## Getting Started
+✨ Key Features
 
-This project is a starting point for a Flutter application.
+🔐 User Authentication — Secure Firebase login and user-based data access.
 
-A few resources to get you started if this is your first Flutter project:
+📚 Subject & Topic Management — Add, update, and track completion progress.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+🗓️ Smart Scheduling — Create daily study sessions with task timers and progress tracking.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+📊 Progress Insights — View total study time, completion rates, and performance analytics.
+
+☁️ Offline Support (SQLite) — Works even without internet; syncs when back online.
+
+🔒 Secure Firestore Rules — Data isolation and validation for each user.
+
+🛠️ Tech Stack
+
+Frontend: React Native CLI (Yarn)
+
+Backend: Firebase Firestore + Authentication
+
+Local Storage: SQLite
+
+State Management: React Hooks / Context API
+
+Notifications: Firebase Cloud Messaging (optional)
+
+Version Control: Git + GitHub
+
+🚀 Future Enhancements
+
+AI-based topic prioritization
+
+Performance analytics dashboard
+
+Study streaks & gamified rewards system
