@@ -1,5 +1,3 @@
-import '../models/topic_model.dart';
-import '../models/schedule_model.dart';
 
 class SchedulerService {
   /// Generates an optimal study schedule using a greedy algorithm

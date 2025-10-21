@@ -5,7 +5,6 @@ import '../models/topic_model.dart';
 import '../models/subject_model.dart';
 import '../services/scheduler_service.dart';
 import '../services/firebase_service.dart';
-import 'auth_provider.dart';
 
 // Today's schedule provider
 final todaysScheduleProvider = StreamProvider<ScheduleModel?>((ref) {
