@@ -35,7 +35,7 @@ class ScheduleController {
         id: topic.id,
         name: topic.name,
         difficulty: topic.priority.toDouble(),
-        dueDate: date.add(Duration(days: 7)), // Default due date
+        dueDate: date, // Use the provided date instead of adding 7 days
         revisionNeeded: false,
         lastStudied: DateTime.now().subtract(Duration(days: 1)),
         isCompleted: topic.isCompleted,
