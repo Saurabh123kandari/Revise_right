@@ -73,7 +73,7 @@ class UserPreferences {
 class SettingsController extends StateNotifier<AsyncValue<UserPreferences>> {
   bool _hasLoaded = false;
   
-  SettingsController() : super(const AsyncValue.data(UserPreferences._defaults)) {
+  SettingsController() : super(AsyncValue.data(UserPreferences.defaults())) {
     // Load preferences when controller is created
     loadPreferences();
   }

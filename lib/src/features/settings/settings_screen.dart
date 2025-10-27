@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../src/core/theme.dart';
 import '../../../src/providers/auth_provider.dart';
 import '../../../src/providers/settings_provider.dart';
+import '../../../src/services/gemini_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -138,6 +139,34 @@ class SettingsScreen extends ConsumerWidget {
                               subtitle: Text('${preferences.breakIntervalMinutes} minutes'),
                               trailing: const Icon(Icons.chevron_right),
                               onTap: () => _showBreakIntervalDialog(context, ref, preferences.breakIntervalMinutes),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // AI Integration Section
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'AI Integration',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ListTile(
+                              leading: const Icon(Icons.vpn_key),
+                              title: const Text('Gemini API Key'),
+                              subtitle: const Text('Required for AI quiz generation'),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () => _showApiKeyDialog(context),
                             ),
                           ],
                         ),
@@ -345,6 +374,71 @@ class SettingsScreen extends ConsumerWidget {
               'Logout',
               style: TextStyle(color: Colors.red),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showApiKeyDialog(BuildContext context) {
+    final controller = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Gemini API Key'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Get your free API key from:\nhttps://ai.google.dev/\n\nFree tier: 1500 requests/day',
+              style: TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                labelText: 'API Key',
+                hintText: 'Enter your Gemini API key',
+                border: OutlineInputBorder(),
+              ),
+              obscureText: false,
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (controller.text.trim().isNotEmpty) {
+                try {
+                  await GeminiService.setApiKey(controller.text.trim());
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('API key saved successfully!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error saving API key: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+            child: const Text('Save'),
           ),
         ],
       ),

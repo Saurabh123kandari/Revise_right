@@ -4,6 +4,7 @@ import '../models/schedule_model.dart';
 import '../models/note_model.dart';
 import '../models/flashcard_model.dart';
 import '../models/subject_model.dart';
+import '../models/quiz_model.dart';
 import '../core/constants.dart';
 
 class FirebaseService {
@@ -213,6 +214,60 @@ class FirebaseService {
   
   static Future<void> deleteFlashcard(String uid, String flashcardId) async {
     await getFlashcardRef(uid, flashcardId).delete();
+  }
+  
+  // Quiz operations
+  static CollectionReference getQuizzesRef(String uid) {
+    return getUserRef(uid).collection('quizzes');
+  }
+  
+  static DocumentReference getQuizRef(String uid, String quizId) {
+    return getQuizzesRef(uid).doc(quizId);
+  }
+  
+  static Future<void> saveQuiz(String uid, QuizModel quiz) async {
+    await getQuizRef(uid, quiz.id).set(quiz.toFirestore());
+  }
+  
+  static Future<QuizModel?> getQuiz(String uid, String quizId) async {
+    final doc = await getQuizRef(uid, quizId).get();
+    if (!doc.exists) return null;
+    return QuizModel.fromFirestore(doc);
+  }
+  
+  static Future<List<QuizModel>> getQuizzesByNote(String uid, String noteId) async {
+    final snapshot = await getQuizzesRef(uid)
+        .where('noteId', isEqualTo: noteId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snapshot.docs.map((doc) => QuizModel.fromFirestore(doc)).toList();
+  }
+  
+  static Stream<List<QuizModel>> watchQuizzesByNote(String uid, String noteId) {
+    return getQuizzesRef(uid)
+        .where('noteId', isEqualTo: noteId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => QuizModel.fromFirestore(doc))
+            .toList());
+  }
+  
+  // Quiz results
+  static CollectionReference getQuizResultsRef(String uid) {
+    return getUserRef(uid).collection('quiz_results');
+  }
+  
+  static Future<void> saveQuizResult(String uid, QuizResultModel result) async {
+    await getQuizResultsRef(uid).doc(result.id).set(result.toFirestore());
+  }
+  
+  static Future<List<QuizResultModel>> getQuizResults(String uid, String quizId) async {
+    final snapshot = await getQuizResultsRef(uid)
+        .where('quizId', isEqualTo: quizId)
+        .orderBy('completedAt', descending: true)
+        .get();
+    return snapshot.docs.map((doc) => QuizResultModel.fromFirestore(doc)).toList();
   }
   
   // Subjects operations

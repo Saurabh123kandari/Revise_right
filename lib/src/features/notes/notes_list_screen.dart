@@ -4,6 +4,7 @@ import '../../../src/core/theme.dart';
 import '../../../src/models/note_model.dart';
 import '../../../src/providers/notes_provider.dart';
 import '../../../src/providers/subject_provider.dart';
+import '../study/generate_quiz_screen.dart';
 import 'add_note_screen.dart';
 
 class NotesListScreen extends ConsumerStatefulWidget {
@@ -262,6 +263,16 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                 ),
               ),
               const PopupMenuItem(
+                value: 'quiz',
+                child: Row(
+                  children: [
+                    Icon(Icons.quiz, size: 20),
+                    SizedBox(width: 8),
+                    Text('Generate AI Quiz'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
                 value: 'delete',
                 child: Row(
                   children: [
@@ -282,6 +293,13 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                       subjectId: note.subjectId,
                       existingNote: note,
                     ),
+                  ),
+                );
+              } else if (value == 'quiz') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GenerateQuizScreen(note: note),
                   ),
                 );
               } else if (value == 'delete') {

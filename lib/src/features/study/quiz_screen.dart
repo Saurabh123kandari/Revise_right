@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../src/core/theme.dart';
-import '../../../src/services/ai_service.dart';
+import '../../../src/models/quiz_model.dart';
+import '../../../src/providers/quiz_provider.dart';
 
 class QuizScreen extends ConsumerStatefulWidget {
-  final String topicId;
-  final List<QuizQuestion> questions;
+  final QuizModel quiz;
   
   const QuizScreen({
     super.key,
-    required this.topicId,
-    required this.questions,
+    required this.quiz,
   });
 
   @override
@@ -25,8 +25,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedAnswers = List.filled(widget.questions.length, null);
-    _showResults = List.filled(widget.questions.length, false);
+    _selectedAnswers = List.filled(widget.quiz.questions.length, null);
+    _showResults = List.filled(widget.quiz.questions.length, false);
   }
 
   void _selectAnswer(int optionIndex) {
@@ -37,13 +37,32 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   }
 
   void _nextQuestion() {
-    if (_currentIndex < widget.questions.length - 1) {
+    if (_currentIndex < widget.quiz.questions.length - 1) {
       setState(() {
         _currentIndex++;
       });
     } else {
-      _showResultsDialog();
+      _saveAndShowResults();
     }
+  }
+
+  void _saveAndShowResults() async {
+    // Save quiz results
+    try {
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+      if (firebaseUser != null) {
+        final quizController = ref.read(quizControllerProvider);
+        await quizController.saveQuizResult(
+          uid: firebaseUser.uid,
+          quiz: widget.quiz,
+          userAnswers: _selectedAnswers,
+        );
+      }
+    } catch (e) {
+      print('Error saving quiz result: $e');
+    }
+    
+    _showResultsDialog();
   }
 
   void _previousQuestion() {
@@ -56,7 +75,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
 
   void _showResultsDialog() {
     final correctAnswers = _selectedAnswers.whereIndexed((index, answer) {
-      return answer == widget.questions[index].correctAnswer;
+      return answer == widget.quiz.questions[index].correctAnswer;
     }).length;
     
     showDialog(
@@ -67,24 +86,24 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              correctAnswers == widget.questions.length
+              correctAnswers == widget.quiz.questions.length
                   ? Icons.celebration
                   : Icons.check_circle,
               size: 64,
-              color: correctAnswers == widget.questions.length
+              color: correctAnswers == widget.quiz.questions.length
                   ? Colors.amber
                   : AppTheme.primaryGreen,
             ),
             const SizedBox(height: 16),
             Text(
-              '$correctAnswers / ${widget.questions.length}',
+              '$correctAnswers / ${widget.quiz.questions.length}',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              '${((correctAnswers / widget.questions.length) * 100).toStringAsFixed(0)}%',
+              '${((correctAnswers / widget.quiz.questions.length) * 100).toStringAsFixed(0)}%',
               style: Theme.of(context).textTheme.titleLarge,
             ),
           ],
@@ -111,7 +130,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.questions.isEmpty) {
+    if (widget.quiz.questions.isEmpty) {
       return Scaffold(
         body: Center(
           child: Text('No quiz questions available'),
@@ -119,14 +138,14 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
       );
     }
 
-    final currentQuestion = widget.questions[_currentIndex];
-    final progress = (_currentIndex + 1) / widget.questions.length;
+    final currentQuestion = widget.quiz.questions[_currentIndex];
+    final progress = (_currentIndex + 1) / widget.quiz.questions.length;
     final selectedAnswer = _selectedAnswers[_currentIndex];
     final showResult = _showResults[_currentIndex];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Question ${_currentIndex + 1} of ${widget.questions.length}'),
+        title: Text('Question ${_currentIndex + 1} of ${widget.quiz.questions.length}'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -255,7 +274,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                     ),
                     const Spacer(),
                     Text(
-                      '${_currentIndex + 1} / ${widget.questions.length}',
+                      '${_currentIndex + 1} / ${widget.quiz.questions.length}',
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     const Spacer(),

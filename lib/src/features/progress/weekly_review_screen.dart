@@ -307,7 +307,7 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
                       reservedSize: 40,
                       getTitlesWidget: (value, meta) {
                         return Text(
-                          '${value.toInt()}',
+                          value.toInt().toString(),
                           style: const TextStyle(
                             fontSize: 10,
                             color: AppTheme.textLight,
