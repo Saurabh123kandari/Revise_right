@@ -7,12 +7,21 @@ import '../services/scheduler_service.dart';
 import '../services/firebase_service.dart';
 
 // Today's schedule provider
-final todaysScheduleProvider = StreamProvider<ScheduleModel?>((ref) {
+final todaysScheduleProvider = StreamProvider<ScheduleModel?>((ref) async* {
   final firebaseUser = FirebaseAuth.instance.currentUser;
   if (firebaseUser != null) {
-    return FirebaseService.watchSchedule(firebaseUser.uid, DateTime.now());
+    try {
+      await for (final schedule in FirebaseService.watchSchedule(firebaseUser.uid, DateTime.now())) {
+        yield schedule;
+      }
+    } catch (error) {
+      // Log error but treat as "no schedule exists"
+      print('Error loading schedule: $error');
+      yield null;
+    }
+  } else {
+    yield null;
   }
-  return Stream.value(null);
 });
 
 // Schedule controller provider

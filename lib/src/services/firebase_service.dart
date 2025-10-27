@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 import '../models/schedule_model.dart';
+import '../models/note_model.dart';
+import '../models/flashcard_model.dart';
+import '../models/subject_model.dart';
 import '../core/constants.dart';
 
 class FirebaseService {
@@ -94,6 +97,169 @@ class FirebaseService {
     return getScheduleRef(uid, dateKey)
         .snapshots()
         .map((doc) => doc.exists ? ScheduleModel.fromFirestore(doc) : null);
+  }
+  
+  // Notes operations
+  static CollectionReference getNotesRef(String uid) {
+    return getUserRef(uid).collection('notes');
+  }
+  
+  static DocumentReference getNoteRef(String uid, String noteId) {
+    return getNotesRef(uid).doc(noteId);
+  }
+  
+  static Future<void> saveNote(String uid, NoteModel note) async {
+    await getNoteRef(uid, note.id).set(note.toFirestore());
+  }
+  
+  static Future<NoteModel?> getNote(String uid, String noteId) async {
+    final doc = await getNoteRef(uid, noteId).get();
+    if (doc.exists) {
+      return NoteModel.fromFirestore(doc);
+    }
+    return null;
+  }
+  
+  static Future<List<NoteModel>> getNotesByTopic(String uid, String topicId) async {
+    final snapshot = await getNotesRef(uid)
+        .where('topicId', isEqualTo: topicId)
+        .get();
+    
+    return snapshot.docs
+        .map((doc) => NoteModel.fromFirestore(doc))
+        .toList();
+  }
+  
+  static Future<List<NoteModel>> getNotesBySubject(String uid, String subjectId) async {
+    final snapshot = await getNotesRef(uid)
+        .where('subjectId', isEqualTo: subjectId)
+        .get();
+    
+    return snapshot.docs
+        .map((doc) => NoteModel.fromFirestore(doc))
+        .toList();
+  }
+  
+  static Stream<List<NoteModel>> watchNotesByTopic(String uid, String topicId) {
+    return getNotesRef(uid)
+        .where('topicId', isEqualTo: topicId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => NoteModel.fromFirestore(doc))
+            .toList());
+  }
+  
+  static Stream<List<NoteModel>> watchNotesBySubject(String uid, String subjectId) {
+    return getNotesRef(uid)
+        .where('subjectId', isEqualTo: subjectId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => NoteModel.fromFirestore(doc))
+            .toList());
+  }
+  
+  static Future<void> deleteNote(String uid, String noteId) async {
+    await getNoteRef(uid, noteId).delete();
+  }
+  
+  // Flashcards operations
+  static CollectionReference getFlashcardsRef(String uid) {
+    return getUserRef(uid).collection('flashcards');
+  }
+  
+  static DocumentReference getFlashcardRef(String uid, String flashcardId) {
+    return getFlashcardsRef(uid).doc(flashcardId);
+  }
+  
+  static Future<void> saveFlashcard(String uid, FlashcardModel flashcard) async {
+    await getFlashcardRef(uid, flashcard.id).set(flashcard.toFirestore());
+  }
+  
+  static Future<List<FlashcardModel>> getFlashcardsByNote(String uid, String noteId) async {
+    final snapshot = await getFlashcardsRef(uid)
+        .where('noteId', isEqualTo: noteId)
+        .get();
+    
+    return snapshot.docs
+        .map((doc) => FlashcardModel.fromFirestore(doc))
+        .toList();
+  }
+  
+  static Stream<List<FlashcardModel>> watchFlashcardsByNote(String uid, String noteId) {
+    return getFlashcardsRef(uid)
+        .where('noteId', isEqualTo: noteId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => FlashcardModel.fromFirestore(doc))
+            .toList());
+  }
+  
+  static Future<void> updateFlashcard(String uid, FlashcardModel flashcard) async {
+    await getFlashcardRef(uid, flashcard.id).set(flashcard.toFirestore());
+  }
+  
+  static Future<void> deleteFlashcard(String uid, String flashcardId) async {
+    await getFlashcardRef(uid, flashcardId).delete();
+  }
+  
+  // Subjects operations
+  static CollectionReference getSubjectsRef(String uid) {
+    return getUserRef(uid).collection('subjects');
+  }
+  
+  static DocumentReference getSubjectRef(String uid, String subjectId) {
+    return getSubjectsRef(uid).doc(subjectId);
+  }
+  
+  static Future<void> saveSubject(String uid, SubjectModel subject) async {
+    await getSubjectRef(uid, subject.id).set(subject.toMap());
+  }
+  
+  static Future<SubjectModel?> getSubject(String uid, String subjectId) async {
+    final doc = await getSubjectRef(uid, subjectId).get();
+    if (doc.exists) {
+      return SubjectModel.fromMap(doc.data() as Map<String, dynamic>);
+    }
+    return null;
+  }
+  
+  static Stream<List<SubjectModel>> watchSubjects(String uid) {
+    return getSubjectsRef(uid)
+        .where('isActive', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => SubjectModel.fromMap(doc.data() as Map<String, dynamic>))
+            .toList());
+  }
+  
+  static Future<void> deleteSubject(String uid, String subjectId) async {
+    await getSubjectRef(uid, subjectId).delete();
+  }
+  
+  // Topics operations
+  static CollectionReference getTopicsRef(String uid) {
+    return getUserRef(uid).collection('topics');
+  }
+  
+  static DocumentReference getTopicRef(String uid, String topicId) {
+    return getTopicsRef(uid).doc(topicId);
+  }
+  
+  static Future<void> saveTopic(String uid, Map<String, dynamic> topicData) async {
+    await getTopicRef(uid, topicData['id'] as String).set(topicData);
+  }
+  
+  static Stream<List<Map<String, dynamic>>> watchTopicsBySubject(String uid, String subjectId) {
+    return getTopicsRef(uid)
+        .where('subjectId', isEqualTo: subjectId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>})
+            .toList());
+  }
+  
+  static Future<void> deleteTopic(String uid, String topicId) async {
+    await getTopicRef(uid, topicId).delete();
   }
   
   static String _formatDateKey(DateTime date) {

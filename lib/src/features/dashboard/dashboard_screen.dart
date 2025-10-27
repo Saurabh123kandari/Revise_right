@@ -50,9 +50,17 @@ class DashboardScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    IconButton(
-                      onPressed: () => _showLogoutDialog(context, ref),
-                      icon: const Icon(Icons.logout, color: Colors.white),
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => Navigator.pushNamed(context, '/settings'),
+                          icon: const Icon(Icons.settings, color: Colors.white),
+                        ),
+                        IconButton(
+                          onPressed: () => _showLogoutDialog(context, ref),
+                          icon: const Icon(Icons.logout, color: Colors.white),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -68,41 +76,82 @@ class DashboardScreen extends ConsumerWidget {
                       topRight: Radius.circular(24),
                     ),
                   ),
-                  child: scheduleAsync.when(
-                    data: (schedule) {
-                      if (schedule == null) {
-                        return _buildNoScheduleView(context, ref);
-                      }
-                      return _buildScheduleView(context, ref, schedule);
-                    },
-                    loading: () => const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                    error: (error, stack) => Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            size: 64,
-                            color: Colors.red[300],
+                  child: Column(
+                    children: [
+                      // Quick Access Menu
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _buildQuickAccessCard(
+                                  context,
+                                  icon: Icons.subject,
+                                  label: 'Subjects',
+                                  color: Colors.blue,
+                                  onTap: () => Navigator.pushNamed(context, '/subjects'),
+                                ),
+                                _buildQuickAccessCard(
+                                  context,
+                                  icon: Icons.note,
+                                  label: 'Notes',
+                                  color: Colors.purple,
+                                  onTap: () => Navigator.pushNamed(context, '/notes'),
+                                ),
+                                _buildQuickAccessCard(
+                                  context,
+                                  icon: Icons.analytics,
+                                  label: 'Progress',
+                                  color: Colors.orange,
+                                  onTap: () => Navigator.pushNamed(context, '/progress'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Divider(),
+                      Expanded(
+                        child: scheduleAsync.when(
+                          data: (schedule) {
+                            if (schedule == null) {
+                              return _buildNoScheduleView(context, ref);
+                            }
+                            return _buildScheduleView(context, ref, schedule);
+                          },
+                          loading: () => const Center(
+                            child: CircularProgressIndicator(),
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Error loading schedule',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            error.toString(),
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.grey[600],
+                          error: (error, stack) => Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  size: 64,
+                                  color: Colors.red[300],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Error loading schedule',
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  error.toString(),
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
@@ -394,6 +443,44 @@ class DashboardScreen extends ConsumerWidget {
     if (hour < 12) return 'Morning';
     if (hour < 17) return 'Afternoon';
     return 'Evening';
+  }
+
+  Widget _buildQuickAccessCard(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Card(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 32,
+                  color: color,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   String _formatDateKey(DateTime date) {

@@ -29,6 +29,19 @@ dependencies:
   
   # Optional
   flutter_quill: ^11.5.0
+  
+  # AI Integration
+  http: ^1.1.0
+  
+  # Charts
+  fl_chart: ^0.65.0
+  
+  # Security
+  flutter_secure_storage: ^9.0.0
+  
+  # Utilities
+  intl: ^0.20.2
+  uuid: ^4.4.0
 
 dev_dependencies:
   flutter_test:

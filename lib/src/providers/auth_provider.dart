@@ -10,17 +10,31 @@ final authStateProvider = StreamProvider<User?>((ref) {
 });
 
 // Current user model provider
-final currentUserProvider = StreamProvider<UserModel?>((ref) {
+final currentUserProvider = FutureProvider<UserModel?>((ref) async {
   final authState = ref.watch(authStateProvider);
   return authState.when(
-    data: (user) {
+    data: (user) async {
       if (user != null) {
-        return Stream.fromFuture(FirebaseService.getUser(user.uid));
+        final userModel = await FirebaseService.getUser(user.uid);
+        // If user doesn't exist in Firestore, create it
+        if (userModel == null) {
+          final newUser = UserModel(
+            uid: user.uid,
+            email: user.email ?? '',
+            displayName: user.displayName ?? 'Student',
+            createdAt: DateTime.now(),
+            lastLoginAt: DateTime.now(),
+            preferences: {},
+          );
+          await FirebaseService.createUser(newUser);
+          return newUser;
+        }
+        return userModel;
       }
-      return Stream.value(null);
+      return null;
     },
-    loading: () => Stream.value(null),
-    error: (_, __) => Stream.value(null),
+    loading: () => null,
+    error: (_, __) => null,
   );
 });
 

@@ -4,6 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'src/core/theme.dart';
 import 'src/features/auth/login_screen.dart';
 import 'src/features/dashboard/dashboard_screen.dart';
+import 'src/features/subject/subject_list_screen.dart';
+import 'src/features/subject/add_subject_screen.dart';
+import 'src/features/notes/notes_list_screen.dart';
+import 'src/features/notes/add_note_screen.dart';
+import 'src/features/progress/progress_screen.dart';
+import 'src/features/settings/settings_screen.dart';
 
 class ReviseRightApp extends ConsumerWidget {
   const ReviseRightApp({super.key});
@@ -34,6 +40,11 @@ class ReviseRightApp extends ConsumerWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/dashboard': (context) => const DashboardScreen(),
+        '/subjects': (context) => const SubjectListScreen(),
+        '/add-subject': (context) => const AddSubjectScreen(),
+        '/notes': (context) => const NotesListScreen(),
+        '/progress': (context) => const ProgressScreen(),
+        '/settings': (context) => const SettingsScreen(),
       },
     );
   }
