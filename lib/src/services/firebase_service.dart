@@ -39,6 +39,10 @@ class FirebaseService {
     await getUserRef(uid).update(data);
   }
   
+  static Future<void> updateUserPreferences(String uid, Map<String, dynamic> preferences) async {
+    await getUserRef(uid).update({'preferences': preferences});
+  }
+  
   // Schedule operations
   static Future<void> writeSchedule(String uid, ScheduleModel schedule) async {
     final dateKey = _formatDateKey(schedule.date);

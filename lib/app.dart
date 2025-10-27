@@ -9,7 +9,9 @@ import 'src/features/subject/add_subject_screen.dart';
 import 'src/features/notes/notes_list_screen.dart';
 import 'src/features/notes/add_note_screen.dart';
 import 'src/features/progress/progress_screen.dart';
+import 'src/features/progress/weekly_review_screen.dart';
 import 'src/features/settings/settings_screen.dart';
+import 'src/features/schedule/adjust_schedule_screen.dart';
 
 class ReviseRightApp extends ConsumerWidget {
   const ReviseRightApp({super.key});
@@ -45,6 +47,13 @@ class ReviseRightApp extends ConsumerWidget {
         '/notes': (context) => const NotesListScreen(),
         '/progress': (context) => const ProgressScreen(),
         '/settings': (context) => const SettingsScreen(),
+        '/adjust-schedule': (context) => const AdjustScheduleScreen(),
+        '/weekly-review': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+          return WeeklyReviewScreen(
+            weekStartDate: args?['weekStartDate'] ?? DateTime.now(),
+          );
+        },
       },
     );
   }

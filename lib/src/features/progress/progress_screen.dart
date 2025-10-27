@@ -56,7 +56,13 @@ class ProgressScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           // Navigate to weekly review
-          // Navigator.pushNamed(context, '/weekly-review');
+          final now = DateTime.now();
+          final weekStart = now.subtract(Duration(days: now.weekday - 1));
+          Navigator.pushNamed(
+            context,
+            '/weekly-review',
+            arguments: {'weekStartDate': weekStart},
+          );
         },
         backgroundColor: AppTheme.primaryGreen,
         icon: const Icon(Icons.assessment),

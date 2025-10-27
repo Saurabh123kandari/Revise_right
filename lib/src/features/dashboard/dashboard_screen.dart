@@ -219,6 +219,24 @@ class DashboardScreen extends ConsumerWidget {
             totalMinutes: schedule.totalMinutes,
             remainingMinutes: remainingMinutes,
           ),
+          const SizedBox(height: 16),
+          
+          // Adjust Schedule Button
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: () => Navigator.pushNamed(context, '/adjust-schedule'),
+              icon: const Icon(Icons.schedule),
+              label: const Text('Adjust Schedule'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
           
           // Tasks Section
