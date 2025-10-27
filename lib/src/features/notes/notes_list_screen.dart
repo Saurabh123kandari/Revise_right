@@ -36,7 +36,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         ? ref.watch(notesByTopicProvider(widget.topicId!))
         : widget.subjectId != null
             ? ref.watch(notesBySubjectProvider(widget.subjectId!))
-            : ref.watch(notesBySubjectProvider(''));
+            : ref.watch(allNotesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -194,23 +194,13 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
           ),
         ),
       ),
-      floatingActionButton: widget.topicId != null && widget.subjectId != null
-          ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddNoteScreen(
-                      topicId: widget.topicId!,
-                      subjectId: widget.subjectId!,
-                    ),
-                  ),
-                );
-              },
-              backgroundColor: AppTheme.primaryGreen,
-              child: const Icon(Icons.add),
-            )
-          : null,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showAddNoteDialog(context);
+        },
+        backgroundColor: AppTheme.primaryGreen,
+        child: const Icon(Icons.add),
+      ),
     );
   }
   
@@ -351,6 +341,50 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     }
     
     return '${date.day}/${date.month}/${date.year}';
+  }
+  
+  void _showAddNoteDialog(BuildContext context) {
+    // Check if we have subject and topic already
+    if (widget.topicId != null && widget.subjectId != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AddNoteScreen(
+            topicId: widget.topicId!,
+            subjectId: widget.subjectId!,
+          ),
+        ),
+      );
+      return;
+    }
+    
+    // Otherwise, show dialog to select subject
+    final subjectsAsync = ref.read(subjectsProvider);
+    subjectsAsync.when(
+      data: (subjects) {
+        if (subjects.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please add a subject first from the Subjects page'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+          return;
+        }
+        
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AddNoteScreen(
+              topicId: '', // Empty for now
+              subjectId: subjects.first.id, // Default to first subject
+            ),
+          ),
+        );
+      },
+      loading: () {},
+      error: (_, __) {},
+    );
   }
 }
 

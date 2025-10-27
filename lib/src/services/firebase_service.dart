@@ -158,6 +158,15 @@ class FirebaseService {
             .toList());
   }
   
+  static Stream<List<NoteModel>> watchAllNotes(String uid) {
+    return getNotesRef(uid)
+        .orderBy('updatedAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => NoteModel.fromFirestore(doc))
+            .toList());
+  }
+  
   static Future<void> deleteNote(String uid, String noteId) async {
     await getNoteRef(uid, noteId).delete();
   }

@@ -21,6 +21,15 @@ final notesBySubjectProvider = StreamProvider.family<List<NoteModel>, String>((r
   return FirebaseService.watchNotesBySubject(firebaseUser.uid, subjectId);
 });
 
+// All notes stream provider
+final allNotesProvider = StreamProvider<List<NoteModel>>((ref) {
+  final firebaseUser = FirebaseAuth.instance.currentUser;
+  if (firebaseUser == null) {
+    return Stream.value([]);
+  }
+  return FirebaseService.watchAllNotes(firebaseUser.uid);
+});
+
 // Notes controller provider
 final notesControllerProvider = Provider<NotesController>((ref) {
   return NotesController();
