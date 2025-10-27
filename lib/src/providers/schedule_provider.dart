@@ -129,4 +129,17 @@ class ScheduleController {
       return schedule.tasks.isNotEmpty ? schedule.tasks.first : null;
     }
   }
+  
+  // Add task to schedule
+  Future<void> addTaskToSchedule({
+    required String userId,
+    required DateTime date,
+    required ScheduleTask task,
+  }) async {
+    try {
+      await FirebaseService.addTaskToSchedule(userId, date, task);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

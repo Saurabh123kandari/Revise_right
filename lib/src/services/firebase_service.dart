@@ -4,6 +4,7 @@ import '../models/schedule_model.dart';
 import '../models/note_model.dart';
 import '../models/flashcard_model.dart';
 import '../models/subject_model.dart';
+import '../models/topic_model.dart';
 import '../models/quiz_model.dart';
 import '../core/constants.dart';
 
@@ -94,6 +95,46 @@ class FirebaseService {
       );
       
       transaction.set(scheduleRef, updatedSchedule.toFirestore());
+    });
+  }
+  
+  static Future<void> addTaskToSchedule(
+    String uid,
+    DateTime date,
+    ScheduleTask task,
+  ) async {
+    final dateKey = _formatDateKey(date);
+    final scheduleRef = getScheduleRef(uid, dateKey);
+    
+    await _firestore.runTransaction((transaction) async {
+      final scheduleDoc = await transaction.get(scheduleRef);
+      ScheduleModel schedule;
+      
+      if (scheduleDoc.exists) {
+        schedule = ScheduleModel.fromFirestore(scheduleDoc);
+        final updatedTasks = [...schedule.tasks, task];
+        final totalMinutes = updatedTasks.fold(0, (sum, t) => sum + t.durationMinutes);
+        
+        schedule = schedule.copyWith(
+          tasks: updatedTasks,
+          totalMinutes: totalMinutes,
+          updatedAt: DateTime.now(),
+        );
+      } else {
+        // Create new schedule if it doesn't exist
+        schedule = ScheduleModel(
+          id: dateKey,
+          userId: uid,
+          date: date,
+          tasks: [task],
+          totalMinutes: task.durationMinutes,
+          completedMinutes: 0,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+      }
+      
+      transaction.set(scheduleRef, schedule.toFirestore());
     });
   }
   
@@ -300,6 +341,15 @@ class FirebaseService {
             .toList());
   }
   
+  static Future<List<SubjectModel>> getAllSubjects(String uid) async {
+    final snapshot = await getSubjectsRef(uid)
+        .where('isActive', isEqualTo: true)
+        .get();
+    return snapshot.docs
+        .map((doc) => SubjectModel.fromMap(doc.data() as Map<String, dynamic>))
+        .toList();
+  }
+  
   static Future<void> deleteSubject(String uid, String subjectId) async {
     await getSubjectRef(uid, subjectId).delete();
   }
@@ -328,6 +378,23 @@ class FirebaseService {
   
   static Future<void> deleteTopic(String uid, String topicId) async {
     await getTopicRef(uid, topicId).delete();
+  }
+  
+  static Future<TopicModel?> getTopic(String uid, String topicId) async {
+    final doc = await getTopicRef(uid, topicId).get();
+    if (doc.exists) {
+      return TopicModel.fromMap(doc.data() as Map<String, dynamic>);
+    }
+    return null;
+  }
+  
+  static Future<List<TopicModel>> getTopicsBySubject(String uid, String subjectId) async {
+    final snapshot = await getTopicsRef(uid)
+        .where('subjectId', isEqualTo: subjectId)
+        .get();
+    return snapshot.docs
+        .map((doc) => TopicModel.fromMap(doc.data() as Map<String, dynamic>))
+        .toList();
   }
   
   static String _formatDateKey(DateTime date) {

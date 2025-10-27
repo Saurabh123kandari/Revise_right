@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:uuid/uuid.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../src/core/theme.dart';
 import '../../../src/models/schedule_model.dart';
+import '../../../src/models/topic_model.dart';
+import '../../../src/models/subject_model.dart';
 import '../../../src/providers/schedule_provider.dart';
 import '../../../src/services/firebase_service.dart';
 
@@ -623,19 +627,357 @@ class _AdjustScheduleScreenState extends ConsumerState<AdjustScheduleScreen> {
     );
   }
 
-  void _showAddTaskDialog() {
+  void _showAddTaskDialog() async {
+    final subjects = await FirebaseService.getAllSubjects(FirebaseAuth.instance.currentUser!.uid);
+    
+    if (subjects.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please add a subject first before creating tasks.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+    
+    String? selectedSubjectId;
+    String? selectedTopicId;
+    TimeOfDay selectedTime = TimeOfDay.now();
+    int duration = 30;
+    int topicRefreshKey = 0; // Key to force FutureBuilder refresh
+    
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Add Task'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                // Subject Selection
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(
+                    labelText: 'Subject',
+                    border: OutlineInputBorder(),
+                  ),
+                  value: selectedSubjectId,
+                  items: subjects.map((subject) {
+                    return DropdownMenuItem(
+                      value: subject.id,
+                      child: Text(subject.name),
+                    );
+                  }).toList(),
+                  onChanged: (value) async {
+                    selectedSubjectId = value;
+                    selectedTopicId = null; // Reset topic selection
+                    setState(() {});
+                    
+                    // Load topics for selected subject
+                    if (selectedSubjectId != null) {
+                      final topics = await FirebaseService.getTopicsBySubject(
+                        FirebaseAuth.instance.currentUser!.uid,
+                        selectedSubjectId!,
+                      );
+                      // Update UI to show topics
+                    }
+                  },
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Topic Selection
+                if (selectedSubjectId != null)
+                  FutureBuilder<List<TopicModel>>(
+                    key: ValueKey(topicRefreshKey),
+                    future: FirebaseService.getTopicsBySubject(
+                      FirebaseAuth.instance.currentUser!.uid,
+                      selectedSubjectId!,
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      
+                      final topics = snapshot.data ?? [];
+                      if (topics.isEmpty) {
+                        return Column(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text(
+                                'No topics available for this subject.',
+                                style: TextStyle(color: Colors.orange),
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: () => _showCreateTopicDialog(context, selectedSubjectId!, setState, () {
+                                setState(() {
+                                  topicRefreshKey++; // Increment to trigger FutureBuilder refresh
+                                });
+                              }),
+                              icon: const Icon(Icons.add),
+                              label: const Text('Create Topic'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryGreen,
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                      
+                      return DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(
+                          labelText: 'Topic',
+                          border: OutlineInputBorder(),
+                        ),
+                        value: selectedTopicId,
+                        items: topics.map((topic) {
+                          return DropdownMenuItem(
+                            value: topic.id,
+                            child: Text(topic.name),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          selectedTopicId = value;
+                          setState(() {});
+                        },
+                      );
+                    },
+                  ),
+                
+                const SizedBox(height: 16),
+                
+                // Time Selection
+                ListTile(
+                  title: const Text('Start Time'),
+                  subtitle: Text(
+                    selectedTime.format(context),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  trailing: const Icon(Icons.access_time),
+                  onTap: () async {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: selectedTime,
+                    );
+                    if (time != null) {
+                      setState(() {
+                        selectedTime = time;
+                      });
+                    }
+                  },
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Duration Selection
+                DropdownButtonFormField<int>(
+                  decoration: const InputDecoration(
+                    labelText: 'Duration',
+                    border: OutlineInputBorder(),
+                  ),
+                  value: duration,
+                  items: [15, 30, 45, 60, 90, 120].map((minutes) {
+                    return DropdownMenuItem(
+                      value: minutes,
+                      child: Text('$minutes minutes'),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        duration = value;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: (selectedSubjectId != null && selectedTopicId != null)
+                  ? () => _addTask(
+                        context,
+                        selectedSubjectId!,
+                        selectedTopicId!,
+                        selectedTime,
+                        duration,
+                      )
+                  : null,
+              child: const Text('Add Task'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _showCreateTopicDialog(BuildContext context, String subjectId, StateSetter setState, VoidCallback onTopicCreated) async {
+    final nameController = TextEditingController();
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Task'),
-        content: const Text('Add task functionality will be implemented in the next step.'),
+        title: const Text('Create Topic'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'Topic Name',
+            hintText: 'Enter topic name',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final topicName = nameController.text.trim();
+              if (topicName.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter a topic name'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+              
+              try {
+                final firebaseUser = FirebaseAuth.instance.currentUser;
+                if (firebaseUser == null) return;
+                
+                // Get subject to get name
+                final subject = await FirebaseService.getSubject(firebaseUser.uid, subjectId);
+                
+                if (subject == null) {
+                  throw Exception('Subject not found');
+                }
+                
+                // Create topic with proper data structure
+                final now = DateTime.now();
+                final topicData = {
+                  'id': const Uuid().v4(),
+                  'name': topicName,
+                  'subjectId': subjectId,
+                  'description': '',
+                  'priority': 2, // Medium priority default
+                  'estimatedMinutes': 30, // Default 30 minutes
+                  'createdAt': Timestamp.fromDate(now),
+                  'updatedAt': Timestamp.fromDate(now),
+                  'isCompleted': false,
+                };
+                
+                await FirebaseService.saveTopic(firebaseUser.uid, topicData);
+                
+                if (context.mounted) {
+                  Navigator.pop(context); // Close topic creation dialog
+                  onTopicCreated(); // Trigger FutureBuilder refresh
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error creating topic: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Create'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _addTask(
+    BuildContext context,
+    String subjectId,
+    String topicId,
+    TimeOfDay time,
+    int duration,
+  ) async {
+    try {
+      // Get subject and topic details
+      final subject = await FirebaseService.getSubject(
+        FirebaseAuth.instance.currentUser!.uid,
+        subjectId,
+      );
+      final topic = await FirebaseService.getTopic(
+        FirebaseAuth.instance.currentUser!.uid,
+        topicId,
+      );
+      
+      if (subject == null || topic == null) {
+        throw Exception('Subject or topic not found');
+      }
+      
+      // Create task
+      final startTime = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        time.hour,
+        time.minute,
+      );
+      
+      final endTime = startTime.add(Duration(minutes: duration));
+      
+      final task = ScheduleTask(
+        topicId: topicId,
+        topicName: topic.name,
+        subjectId: subjectId,
+        subjectName: subject.name,
+        durationMinutes: duration,
+        startTime: startTime,
+        endTime: endTime,
+        isCompleted: false,
+      );
+      
+      // Add task to schedule
+      final scheduleController = ref.read(scheduleControllerProvider);
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+      if (firebaseUser == null) return;
+      
+      await scheduleController.addTaskToSchedule(
+        userId: firebaseUser.uid,
+        date: _selectedDate,
+        task: task,
+      );
+      
+      if (mounted) {
+        Navigator.pop(context); // Close dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Task "${topic.name}" added successfully'),
+            backgroundColor: AppTheme.primaryGreen,
+          ),
+        );
+        setState(() {}); // Refresh UI
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error adding task: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
