@@ -180,7 +180,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen>
                             height: 400,
                             margin: const EdgeInsets.symmetric(horizontal: 24),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppTheme.getCardBackgroundColor(context),
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(

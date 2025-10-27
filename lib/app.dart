@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'src/core/theme.dart';
+import 'src/providers/settings_provider.dart';
 import 'src/features/auth/login_screen.dart';
 import 'src/features/dashboard/dashboard_screen.dart';
 import 'src/features/subject/subject_list_screen.dart';
@@ -18,17 +19,19 @@ class ReviseRightApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    
     return MaterialApp(
       title: 'ReviseRight',
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
+              body: AppLoadingWidget(),
             );
           }
           

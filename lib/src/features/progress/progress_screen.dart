@@ -31,9 +31,9 @@ class ProgressScreen extends ConsumerWidget {
         child: SafeArea(
           child: Container(
             margin: const EdgeInsets.only(top: 16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
+            decoration: BoxDecoration(
+              color: AppTheme.getScaffoldBackgroundColor(context),
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(24),
                 topRight: Radius.circular(24),
               ),

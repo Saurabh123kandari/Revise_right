@@ -11,7 +11,7 @@ class UserPreferences {
   final bool enableStudyReminders;
   final Map<String, dynamic> customSettings;
 
-  UserPreferences({
+  const UserPreferences({
     required this.themeMode,
     required this.enableNotifications,
     required this.breakIntervalMinutes,
@@ -19,15 +19,15 @@ class UserPreferences {
     required this.customSettings,
   });
 
-  factory UserPreferences.defaults() {
-    return UserPreferences(
-      themeMode: ThemeMode.system,
-      enableNotifications: true,
-      breakIntervalMinutes: 25, // Default to Pomodoro style
-      enableStudyReminders: true,
-      customSettings: {},
-    );
-  }
+  static const UserPreferences _defaults = UserPreferences(
+    themeMode: ThemeMode.system,
+    enableNotifications: true,
+    breakIntervalMinutes: 25, // Default to Pomodoro style
+    enableStudyReminders: true,
+    customSettings: {},
+  );
+
+  factory UserPreferences.defaults() => _defaults;
 
   Map<String, dynamic> toMap() {
     return {
@@ -71,15 +71,22 @@ class UserPreferences {
 
 /// Controller for managing user preferences
 class SettingsController extends StateNotifier<AsyncValue<UserPreferences>> {
-  SettingsController() : super(const AsyncValue.loading()) {
+  bool _hasLoaded = false;
+  
+  SettingsController() : super(const AsyncValue.data(UserPreferences._defaults)) {
+    // Load preferences when controller is created
     loadPreferences();
   }
 
   /// Load user preferences from Firestore
   Future<void> loadPreferences() async {
+    if (_hasLoaded) return;
+    
+    state = const AsyncValue.loading();
     final firebaseUser = FirebaseAuth.instance.currentUser;
     if (firebaseUser == null) {
       state = AsyncValue.data(UserPreferences.defaults());
+      _hasLoaded = true;
       return;
     }
 
@@ -90,8 +97,10 @@ class SettingsController extends StateNotifier<AsyncValue<UserPreferences>> {
       } else {
         state = AsyncValue.data(UserPreferences.defaults());
       }
+      _hasLoaded = true;
     } catch (e, stackTrace) {
       state = AsyncValue.error(e, stackTrace);
+      _hasLoaded = true;
     }
   }
 
@@ -167,6 +176,7 @@ final settingsControllerProvider = StateNotifierProvider<SettingsController, Asy
 /// Provider for current user preferences
 final userPreferencesProvider = Provider<UserPreferences>((ref) {
   final settings = ref.watch(settingsControllerProvider);
+  
   return settings.when(
     data: (preferences) => preferences,
     loading: () => UserPreferences.defaults(),

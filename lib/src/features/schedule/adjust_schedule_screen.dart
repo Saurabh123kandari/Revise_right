@@ -59,9 +59,9 @@ class _AdjustScheduleScreenState extends ConsumerState<AdjustScheduleScreen> {
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.all(Radius.circular(16)),
+                  decoration: BoxDecoration(
+                    color: AppTheme.getScaffoldBackgroundColor(context),
+                    borderRadius: const BorderRadius.all(Radius.circular(16)),
                   ),
                   child: _isWeeklyView ? _buildWeeklyView() : _buildDailyView(),
                 ),
@@ -78,7 +78,7 @@ class _AdjustScheduleScreenState extends ConsumerState<AdjustScheduleScreen> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getScaffoldBackgroundColor(context),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
